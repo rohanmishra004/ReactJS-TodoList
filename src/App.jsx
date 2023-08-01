@@ -1,44 +1,72 @@
-import './style.css'
-import { useState } from 'react';
+import './style.css';
+import { useState, useEffect } from 'react';
+import NewTodo from './TodoForm';
+import TodoList from './TodoList';
 
 const App = () => {
-  const [newItem, setItem] = useState("");
-  const [todos,setTodos] = useState([])
-  const handleSubmit = (e) => {
-    e.preventDefault();
+
+  //DECLARING STATES FOR COMPONENTS
+  const [todos, setTodos] = useState(() => {
+    const localValue = localStorage.getItem("ITEMS")
+    if (localValue === null) return []
+    return JSON.parse(localValue)
+  })
+
+  //USING HOOKS
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos))
+  },[todos])
+
+
+  //HANDLING FUNCTIONS
+  
+  const AddTodos = (title) => {
     setTodos((currentTodos) => {
-      return [...currentTodos,{id:crypto.randomUUID(), title:newItem, completed:false}]
+      return [
+        ...currentTodos, { id: crypto.randomUUID(), title, completed: false}
+      ]
     })
-    setItem("")
   }
 
-  return (
-    <>
-    <form onSubmit={handleSubmit} className='new-item-form'>
-      <div className="form-row">
-        <label htmlFor='item'>New Item</label>
-          <input value={newItem} onChange={(e) => {
-            setItem(e.target.value)
-        }} type="text" id="item" />
-      </div>
-      <button className='btn'>Add</button>
-    </form>
+
+
+
+  //Handling state change for checkbox to mark the task either completed or not completed
+  const toggleTodos = (id, completed) => {
+    setTodos(currentTodos => {
+      return currentTodos.map(todo => {
+        if (todo.id === id) {
+          //here we are creating a brand new todo and changing just one property in it
+          return {...todo, completed}
+        }
+
+        return todo
+      })
+    })
+  }
+
+  //Deleting todos
+  const deleteTodos = (id) => {
+    setTodos(currentTodos => {
+      return currentTodos.filter(todo => todo.id!==id)
+    })
+  }
+
+  console.log(todos)
+  return ( 
+    <div>
+
+      {/* FORM COMPONENT */}
+      <NewTodo AddTodos={ AddTodos } />
+
+      {/* HEADER COMPONENT */}
       <h1 className='header'>Todo List</h1>
-      <ul className='lsit'>
-        {todos.map((todo) => {
-          return (
-            <li key={todo.id}>
-              <label>
-                <input type="checkbox" checked={ todo.completed} />{todo.title}
-              </label>
-              <button className='btn btn-danger'>Delete</button>
-            </li>
-          )
-        })}
-        
-      </ul>
-    </>
-    );
+
+      {/* LIST COMPONENT */}
+      <TodoList todos={todos} toggleTodos={toggleTodos } deleteTodos ={deleteTodos} />
+
+    </div>
+   );
 }
  
 export default App;
